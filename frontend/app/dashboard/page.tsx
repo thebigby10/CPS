@@ -1,45 +1,53 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { BookOpen, Users, Award, Plus, Settings, LogOut, User } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  BookOpen,
+  Users,
+  Award,
+  Plus,
+  Settings,
+  LogOut,
+  User,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface UserType {
-  id: number
-  email: string
-  firstName?: string
-  lastName?: string
-  role: "student" | "instructor" | "admin"
+  id: number;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: "student" | "instructor" | "admin";
 }
 
 interface Course {
-  id: number
-  title: string
-  description: string
-  instructor: string
-  students: number
-  status: "active" | "draft"
-  progress?: number
+  id: number;
+  title: string;
+  description: string;
+  instructor: string;
+  students: number;
+  status: "active" | "draft";
+  progress?: number;
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<UserType | null>(null)
-  const [courses, setCourses] = useState<Course[]>([])
-  const router = useRouter()
+  const [user, setUser] = useState<UserType | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
+    const userData = localStorage.getItem("user");
     if (!userData) {
-      router.push("/auth/login")
-      return
+      router.push("/auth/login");
+      return;
     }
 
-    const parsedUser = JSON.parse(userData)
-    setUser(parsedUser)
+    const parsedUser = JSON.parse(userData);
+    setUser(parsedUser);
 
     // Mock courses based on role
     const mockCourses: Course[] = [
@@ -70,32 +78,32 @@ export default function DashboardPage() {
         status: "draft",
         progress: 0,
       },
-    ]
+    ];
 
-    setCourses(mockCourses)
-  }, [router])
+    setCourses(mockCourses);
+  }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/")
-  }
+    localStorage.removeItem("user");
+    router.push("/");
+  };
 
   if (!user) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       case "instructor":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "student":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const getStatsForRole = () => {
     switch (user.role) {
@@ -105,25 +113,25 @@ export default function DashboardPage() {
           { title: "Total Users", value: "2,847", icon: Users },
           { title: "Active Instructors", value: "23", icon: User },
           { title: "Certificates Issued", value: "1,234", icon: Award },
-        ]
+        ];
       case "instructor":
         return [
           { title: "My Courses", value: "8", icon: BookOpen },
           { title: "Total Students", value: "342", icon: Users },
           { title: "Avg. Rating", value: "4.8", icon: Award },
           { title: "Course Views", value: "12.5k", icon: User },
-        ]
+        ];
       case "student":
         return [
           { title: "Enrolled Courses", value: "12", icon: BookOpen },
           { title: "Completed", value: "8", icon: Award },
           { title: "In Progress", value: "4", icon: Users },
           { title: "Certificates", value: "6", icon: Award },
-        ]
+        ];
       default:
-        return []
+        return [];
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -134,14 +142,18 @@ export default function DashboardPage() {
             <div className="flex items-center">
               <Link href="/" className="flex items-center">
                 <BookOpen className="h-8 w-8 text-blue-600" />
-                <span className="ml-2 text-2xl font-bold text-gray-900">CPS Academy</span>
+                <span className="ml-2 text-2xl font-bold text-gray-900">
+                  CPS Academy
+                </span>
               </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Badge className={getRoleColor(user.role)}>
                 {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </Badge>
-              <span className="text-sm text-gray-700">{user.firstName || user.email}</span>
+              <span className="text-sm text-gray-700">
+                {user.firstName || user.email}
+              </span>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -154,10 +166,14 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user.firstName || user.email}!</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {user.firstName || user.email}!
+          </h1>
           <p className="text-gray-600 mt-2">
-            {user.role === "admin" && "Manage your academy from this dashboard."}
-            {user.role === "instructor" && "Track your courses and student progress."}
+            {user.role === "admin" &&
+              "Manage your academy from this dashboard."}
+            {user.role === "instructor" &&
+              "Track your courses and student progress."}
             {user.role === "student" && "Continue your learning journey."}
           </p>
         </div>
@@ -170,8 +186,12 @@ export default function DashboardPage() {
                 <div className="flex items-center">
                   <stat.icon className="h-8 w-8 text-blue-600" />
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-sm font-medium text-gray-600">
+                      {stat.title}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -185,7 +205,11 @@ export default function DashboardPage() {
           <div className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {user.role === "student" ? "My Courses" : user.role === "instructor" ? "My Courses" : "Recent Courses"}
+                {user.role === "student"
+                  ? "My Courses"
+                  : user.role === "instructor"
+                    ? "My Courses"
+                    : "Recent Courses"}
               </h2>
               {(user.role === "instructor" || user.role === "admin") && (
                 <Link href="/courses/create">
@@ -203,34 +227,52 @@ export default function DashboardPage() {
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{course.title}</h3>
-                        <p className="text-gray-600 mt-1">{course.description}</p>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {course.title}
+                        </h3>
+                        <p className="text-gray-600 mt-1">
+                          {course.description}
+                        </p>
                         <p className="text-sm text-gray-500 mt-2">
-                          Instructor: {course.instructor} • {course.students} students
+                          Instructor: {course.instructor} • {course.students}{" "}
+                          students
                         </p>
                       </div>
-                      <Badge variant={course.status === "active" ? "default" : "secondary"}>{course.status}</Badge>
+                      <Badge
+                        variant={
+                          course.status === "active" ? "default" : "secondary"
+                        }
+                      >
+                        {course.status}
+                      </Badge>
                     </div>
 
-                    {user.role === "student" && course.progress !== undefined && (
-                      <div className="mb-4">
-                        <div className="flex justify-between text-sm text-gray-600 mb-1">
-                          <span>Progress</span>
-                          <span>{course.progress}%</span>
+                    {user.role === "student" &&
+                      course.progress !== undefined && (
+                        <div className="mb-4">
+                          <div className="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progress</span>
+                            <span>{course.progress}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{ width: `${course.progress}%` }}
+                            ></div>
+                          </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                        </div>
-                      </div>
-                    )}
+                      )}
 
                     <div className="flex space-x-2">
                       <Link href={`/courses/${course.id}`}>
                         <Button variant="outline" size="sm">
-                          {user.role === "student" ? "Continue" : "View Details"}
+                          {user.role === "student"
+                            ? "Continue"
+                            : "View Details"}
                         </Button>
                       </Link>
-                      {(user.role === "instructor" || user.role === "admin") && (
+                      {(user.role === "instructor" ||
+                        user.role === "admin") && (
                         <Button variant="outline" size="sm">
                           <Settings className="h-4 w-4 mr-2" />
                           Manage
@@ -300,5 +342,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
