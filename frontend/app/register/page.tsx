@@ -1,41 +1,47 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { useUser } from "@/contexts/user-context"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { User } from "@/lib/types"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useUser } from "@/contexts/user-context";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import type { User } from "@/lib/types";
 
 export default function RegisterPage() {
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [role, setRole] = useState<User["role"]>("Normal User")
-  const [error, setError] = useState("")
-  const { register } = useUser()
-  const router = useRouter()
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<User["role"]>("normal_user");
+  const [error, setError] = useState("");
+  const { register } = useUser();
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    if (!name || !email || !password) {
-      setError("Please fill in all fields")
-      return
+    if (!username || !email || !password) {
+      setError("Please fill in all fields");
+      return;
     }
 
-    const success = register(name, email, password, role)
+    const success = register(username, email, password, role);
     if (success) {
-      router.push("/")
+      router.push("/");
     } else {
-      setError("Registration failed")
+      setError("Registration failed");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -47,12 +53,12 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="name"
+                id="username"
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your full name"
                 required
               />
@@ -82,7 +88,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <Label htmlFor="role">Role</Label>
               <select
                 id="role"
@@ -94,7 +100,7 @@ export default function RegisterPage() {
                 <option value="Student">Student</option>
                 <option value="Social Media Manager">Social Media Manager</option>
               </select>
-            </div>
+            </div> */}
 
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
@@ -114,5 +120,5 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
