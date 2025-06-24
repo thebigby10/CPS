@@ -1,12 +1,19 @@
+// config/middlewares.ts
 export default [
-  'strapi::logger',
-  'strapi::errors',
-  'strapi::security',
-  'strapi::cors',
-  'strapi::poweredBy',
-  'strapi::query',
-  'strapi::body',
-  'strapi::session',
-  'strapi::favicon',
-  'strapi::public',
+  "strapi::errors",
+  {
+    name: "strapi::cors",
+    config: {
+      origin: ["http://localhost:3000"],
+      credentials: true,
+    },
+  },
+  "strapi::logger",
+  "strapi::security",
+  "strapi::poweredBy",
+  "strapi::query",
+  "strapi::body",
+  "strapi::session",
+  "strapi::favicon",
+  "strapi::public",
 ];
