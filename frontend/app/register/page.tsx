@@ -23,10 +23,10 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<User["role"]>("normal_user");
   const [error, setError] = useState("");
-  const { register } = useUser();
+  const { user, register } = useUser();
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -35,8 +35,9 @@ export default function RegisterPage() {
       return;
     }
 
-    const success = register(username, email, password, role);
+    const success = await register(username, email, password, role);
     if (success) {
+      console.log(user);
       router.push("/");
     } else {
       setError("Registration failed");

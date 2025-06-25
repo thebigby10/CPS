@@ -1,121 +1,158 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useUser } from "@/contexts/user-context"
-import { mockCourses, mockUsers } from "@/lib/mock-data"
-import type { Course, Module, User } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Edit, Trash2, Plus, X, Users, Crown, GraduationCap, UserIcon } from "lucide-react"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/user-context";
+import { mockCourses, mockUsers } from "@/lib/mock-data";
+import type { Course, Module, User } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Edit,
+  Trash2,
+  Plus,
+  X,
+  Users,
+  Crown,
+  GraduationCap,
+  UserIcon,
+} from "lucide-react";
 
 interface CourseFormData {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }
 
 interface ModuleFormData {
-  name: string
-  description: string
-  classCount: number
-  topics: string[]
-  courseId: string
+  name: string;
+  description: string;
+  classCount: number;
+  topics: string[];
+  courseId: string;
 }
 
 export default function ManagerPage() {
-  const { user } = useUser()
-  const router = useRouter()
-  const [courses, setCourses] = useState<Course[]>(mockCourses)
-  const [users, setUsers] = useState<User[]>(mockUsers)
-  const [activeTab, setActiveTab] = useState<"courses" | "modules" | "enrollment">("courses")
+  const { user } = useUser();
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>(mockCourses);
+  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [activeTab, setActiveTab] = useState<
+    "courses" | "modules" | "enrollment"
+  >("courses");
 
   // Course form states
-  const [showCourseForm, setShowCourseForm] = useState(false)
-  const [editingCourse, setEditingCourse] = useState<Course | null>(null)
-  const [courseForm, setCourseForm] = useState<CourseFormData>({ title: "", description: "" })
+  const [showCourseForm, setShowCourseForm] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [courseForm, setCourseForm] = useState<CourseFormData>({
+    title: "",
+    description: "",
+  });
 
   // Module form states
-  const [showModuleForm, setShowModuleForm] = useState(false)
-  const [editingModule, setEditingModule] = useState<{ module: Module; courseId: string } | null>(null)
+  const [showModuleForm, setShowModuleForm] = useState(false);
+  const [editingModule, setEditingModule] = useState<{
+    module: Module;
+    courseId: string;
+  } | null>(null);
   const [moduleForm, setModuleForm] = useState<ModuleFormData>({
     name: "",
     description: "",
     classCount: 0,
     topics: [],
     courseId: "",
-  })
-  const [topicInput, setTopicInput] = useState("")
+  });
+  const [topicInput, setTopicInput] = useState("");
 
   // Enrollment states
-  const [searchTerm, setSearchTerm] = useState("")
-  const [roleFilter, setRoleFilter] = useState<"all" | User["role"]>("all")
-  const [editingUserRole, setEditingUserRole] = useState<User | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | User["role"]>("all");
+  const [editingUserRole, setEditingUserRole] = useState<User | null>(null);
 
   // Delete confirmation states
   const [deleteConfirm, setDeleteConfirm] = useState<{
-    type: "course" | "module"
-    id: string
-    courseId?: string
-  } | null>(null)
+    type: "course" | "module";
+    id: string;
+    courseId?: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (!user || user.role !== "Social Media Manager") {
-      router.push("/")
+    if (!user || user.role !== "social_media_manager") {
+      router.push("/");
     }
-  }, [user, router])
+  }, [user, router]);
 
-  if (!user || user.role !== "Social Media Manager") {
-    return null
+  if (!user || user.role !== "social_media_manager") {
+    return null;
   }
 
   // Course CRUD operations
   const handleCreateCourse = () => {
-    if (!courseForm.title.trim() || !courseForm.description.trim()) return
+    if (!courseForm.title.trim() || !courseForm.description.trim()) return;
 
     const newCourse: Course = {
       id: Date.now().toString(),
       title: courseForm.title,
       description: courseForm.description,
       modules: [],
-    }
+    };
 
-    setCourses([...courses, newCourse])
-    setCourseForm({ title: "", description: "" })
-    setShowCourseForm(false)
-  }
+    setCourses([...courses, newCourse]);
+    setCourseForm({ title: "", description: "" });
+    setShowCourseForm(false);
+  };
 
   const handleEditCourse = (course: Course) => {
-    setEditingCourse(course)
-    setCourseForm({ title: course.title, description: course.description })
-    setShowCourseForm(true)
-  }
+    setEditingCourse(course);
+    setCourseForm({ title: course.title, description: course.description });
+    setShowCourseForm(true);
+  };
 
   const handleUpdateCourse = () => {
-    if (!editingCourse || !courseForm.title.trim() || !courseForm.description.trim()) return
+    if (
+      !editingCourse ||
+      !courseForm.title.trim() ||
+      !courseForm.description.trim()
+    )
+      return;
 
     setCourses(
       courses.map((course) =>
         course.id === editingCourse.id
-          ? { ...course, title: courseForm.title, description: courseForm.description }
+          ? {
+              ...course,
+              title: courseForm.title,
+              description: courseForm.description,
+            }
           : course,
       ),
-    )
+    );
 
-    setEditingCourse(null)
-    setCourseForm({ title: "", description: "" })
-    setShowCourseForm(false)
-  }
+    setEditingCourse(null);
+    setCourseForm({ title: "", description: "" });
+    setShowCourseForm(false);
+  };
 
   const handleDeleteCourse = (courseId: string) => {
-    setCourses(courses.filter((c) => c.id !== courseId))
-    setDeleteConfirm(null)
-  }
+    setCourses(courses.filter((c) => c.id !== courseId));
+    setDeleteConfirm(null);
+  };
 
   // Module CRUD operations
   const handleCreateModule = () => {
-    if (!moduleForm.name.trim() || !moduleForm.description.trim() || !moduleForm.courseId) return
+    if (
+      !moduleForm.name.trim() ||
+      !moduleForm.description.trim() ||
+      !moduleForm.courseId
+    )
+      return;
 
     const newModule: Module = {
       id: Date.now().toString(),
@@ -123,32 +160,45 @@ export default function ManagerPage() {
       description: moduleForm.description,
       classCount: moduleForm.classCount,
       topics: moduleForm.topics,
-    }
+    };
 
     setCourses(
       courses.map((course) =>
-        course.id === moduleForm.courseId ? { ...course, modules: [...course.modules, newModule] } : course,
+        course.id === moduleForm.courseId
+          ? { ...course, modules: [...course.modules, newModule] }
+          : course,
       ),
-    )
+    );
 
-    setModuleForm({ name: "", description: "", classCount: 0, topics: [], courseId: "" })
-    setShowModuleForm(false)
-  }
+    setModuleForm({
+      name: "",
+      description: "",
+      classCount: 0,
+      topics: [],
+      courseId: "",
+    });
+    setShowModuleForm(false);
+  };
 
   const handleEditModule = (module: Module, courseId: string) => {
-    setEditingModule({ module, courseId })
+    setEditingModule({ module, courseId });
     setModuleForm({
       name: module.name,
       description: module.description,
       classCount: module.classCount,
       topics: [...module.topics],
       courseId,
-    })
-    setShowModuleForm(true)
-  }
+    });
+    setShowModuleForm(true);
+  };
 
   const handleUpdateModule = () => {
-    if (!editingModule || !moduleForm.name.trim() || !moduleForm.description.trim()) return
+    if (
+      !editingModule ||
+      !moduleForm.name.trim() ||
+      !moduleForm.description.trim()
+    )
+      return;
 
     setCourses(
       courses.map((course) =>
@@ -169,94 +219,119 @@ export default function ManagerPage() {
             }
           : course,
       ),
-    )
+    );
 
-    setEditingModule(null)
-    setModuleForm({ name: "", description: "", classCount: 0, topics: [], courseId: "" })
-    setShowModuleForm(false)
-  }
+    setEditingModule(null);
+    setModuleForm({
+      name: "",
+      description: "",
+      classCount: 0,
+      topics: [],
+      courseId: "",
+    });
+    setShowModuleForm(false);
+  };
 
   const handleDeleteModule = (courseId: string, moduleId: string) => {
     setCourses(
       courses.map((course) =>
-        course.id === courseId ? { ...course, modules: course.modules.filter((m) => m.id !== moduleId) } : course,
+        course.id === courseId
+          ? {
+              ...course,
+              modules: course.modules.filter((m) => m.id !== moduleId),
+            }
+          : course,
       ),
-    )
-    setDeleteConfirm(null)
-  }
+    );
+    setDeleteConfirm(null);
+  };
 
   // User role management
   const handleUpdateUserRole = (userId: string, newRole: User["role"]) => {
-    setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)))
-    setEditingUserRole(null)
-  }
+    setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+    setEditingUserRole(null);
+  };
 
   // Helper functions
   const addTopic = () => {
     if (topicInput.trim() && !moduleForm.topics.includes(topicInput.trim())) {
-      setModuleForm({ ...moduleForm, topics: [...moduleForm.topics, topicInput.trim()] })
-      setTopicInput("")
+      setModuleForm({
+        ...moduleForm,
+        topics: [...moduleForm.topics, topicInput.trim()],
+      });
+      setTopicInput("");
     }
-  }
+  };
 
   const removeTopic = (topicToRemove: string) => {
-    setModuleForm({ ...moduleForm, topics: moduleForm.topics.filter((topic) => topic !== topicToRemove) })
-  }
+    setModuleForm({
+      ...moduleForm,
+      topics: moduleForm.topics.filter((topic) => topic !== topicToRemove),
+    });
+  };
 
   const resetForms = () => {
-    setShowCourseForm(false)
-    setShowModuleForm(false)
-    setEditingCourse(null)
-    setEditingModule(null)
-    setCourseForm({ title: "", description: "" })
-    setModuleForm({ name: "", description: "", classCount: 0, topics: [], courseId: "" })
-    setTopicInput("")
-  }
+    setShowCourseForm(false);
+    setShowModuleForm(false);
+    setEditingCourse(null);
+    setEditingModule(null);
+    setCourseForm({ title: "", description: "" });
+    setModuleForm({
+      name: "",
+      description: "",
+      classCount: 0,
+      topics: [],
+      courseId: "",
+    });
+    setTopicInput("");
+  };
 
   // Filter users based on search and role
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRole = roleFilter === "all" || u.role === roleFilter
-    return matchesSearch && matchesRole
-  })
+      u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
 
   // Get role statistics
   const roleStats = {
     total: users.length,
-    students: users.filter((u) => u.role === "Student").length,
-    normalUsers: users.filter((u) => u.role === "Normal User").length,
-    managers: users.filter((u) => u.role === "Social Media Manager").length,
-  }
+    students: users.filter((u) => u.role === "student").length,
+    normalUsers: users.filter((u) => u.role === "normal_user").length,
+    managers: users.filter((u) => u.role === "social_media_manager").length,
+  };
 
   const getRoleIcon = (role: User["role"]) => {
     switch (role) {
       case "Student":
-        return <GraduationCap className="w-4 h-4" />
+        return <GraduationCap className="w-4 h-4" />;
       case "Social Media Manager":
-        return <Crown className="w-4 h-4" />
+        return <Crown className="w-4 h-4" />;
       default:
-        return <UserIcon className="w-4 h-4" />
+        return <UserIcon className="w-4 h-4" />;
     }
-  }
+  };
 
   const getRoleColor = (role: User["role"]) => {
     switch (role) {
       case "Student":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "Social Media Manager":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Manager Panel</h1>
-        <p className="text-gray-600">Manage courses, modules, and user enrollments</p>
+        <p className="text-gray-600">
+          Manage courses, modules, and user enrollments
+        </p>
       </div>
 
       {/* Tab Navigation */}
@@ -304,16 +379,20 @@ export default function ManagerPage() {
           <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete this {deleteConfirm.type}? This action cannot be undone.
+              Are you sure you want to delete this {deleteConfirm.type}? This
+              action cannot be undone.
             </p>
             <div className="flex space-x-4">
               <Button
                 variant="destructive"
                 onClick={() => {
                   if (deleteConfirm.type === "course") {
-                    handleDeleteCourse(deleteConfirm.id)
+                    handleDeleteCourse(deleteConfirm.id);
                   } else {
-                    handleDeleteModule(deleteConfirm.courseId!, deleteConfirm.id)
+                    handleDeleteModule(
+                      deleteConfirm.courseId!,
+                      deleteConfirm.id,
+                    );
                   }
                 }}
               >
@@ -333,17 +412,29 @@ export default function ManagerPage() {
           <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Update User Role</h3>
             <p className="text-gray-600 mb-4">
-              Change role for <strong>{editingUserRole.name}</strong> ({editingUserRole.email})
+              Change role for <strong>{editingUserRole.name}</strong> (
+              {editingUserRole.email})
             </p>
             <div className="space-y-3 mb-6">
-              {(["Normal User", "Student", "Social Media Manager"] as User["role"][]).map((role) => (
-                <label key={role} className="flex items-center space-x-3 cursor-pointer">
+              {(
+                [
+                  "Normal User",
+                  "Student",
+                  "Social Media Manager",
+                ] as User["role"][]
+              ).map((role) => (
+                <label
+                  key={role}
+                  className="flex items-center space-x-3 cursor-pointer"
+                >
                   <input
                     type="radio"
                     name="role"
                     value={role}
                     checked={editingUserRole.role === role}
-                    onChange={() => setEditingUserRole({ ...editingUserRole, role })}
+                    onChange={() =>
+                      setEditingUserRole({ ...editingUserRole, role })
+                    }
                     className="text-blue-600"
                   />
                   <div className="flex items-center space-x-2">
@@ -354,10 +445,17 @@ export default function ManagerPage() {
               ))}
             </div>
             <div className="flex space-x-4">
-              <Button onClick={() => handleUpdateUserRole(editingUserRole.id, editingUserRole.role)}>
+              <Button
+                onClick={() =>
+                  handleUpdateUserRole(editingUserRole.id, editingUserRole.role)
+                }
+              >
                 Update Role
               </Button>
-              <Button variant="outline" onClick={() => setEditingUserRole(null)}>
+              <Button
+                variant="outline"
+                onClick={() => setEditingUserRole(null)}
+              >
                 Cancel
               </Button>
             </div>
@@ -387,7 +485,9 @@ export default function ManagerPage() {
                   <GraduationCap className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-sm text-gray-600">Students</p>
-                    <p className="text-2xl font-bold text-blue-600">{roleStats.students}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {roleStats.students}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -398,7 +498,9 @@ export default function ManagerPage() {
                   <UserIcon className="w-5 h-5 text-gray-600" />
                   <div>
                     <p className="text-sm text-gray-600">Normal Users</p>
-                    <p className="text-2xl font-bold text-gray-600">{roleStats.normalUsers}</p>
+                    <p className="text-2xl font-bold text-gray-600">
+                      {roleStats.normalUsers}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -409,7 +511,9 @@ export default function ManagerPage() {
                   <Crown className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="text-sm text-gray-600">Managers</p>
-                    <p className="text-2xl font-bold text-purple-600">{roleStats.managers}</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {roleStats.managers}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -428,7 +532,9 @@ export default function ManagerPage() {
             <div>
               <select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as typeof roleFilter)}
+                onChange={(e) =>
+                  setRoleFilter(e.target.value as typeof roleFilter)
+                }
                 className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="all">All Roles</option>
@@ -443,17 +549,27 @@ export default function ManagerPage() {
           <Card>
             <CardHeader>
               <CardTitle>Registered Users</CardTitle>
-              <CardDescription>Manage user roles and permissions</CardDescription>
+              <CardDescription>
+                Manage user roles and permissions
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">User</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Email</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Role</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        User
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Email
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Role
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -466,7 +582,9 @@ export default function ManagerPage() {
                                 {u.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
-                            <span className="font-medium text-gray-900">{u.name}</span>
+                            <span className="font-medium text-gray-900">
+                              {u.name}
+                            </span>
                           </div>
                         </td>
                         <td className="py-3 px-4 text-gray-600">{u.email}</td>
@@ -494,7 +612,9 @@ export default function ManagerPage() {
                   </tbody>
                 </table>
                 {filteredUsers.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">No users found matching your criteria.</div>
+                  <div className="text-center py-8 text-gray-500">
+                    No users found matching your criteria.
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -517,9 +637,13 @@ export default function ManagerPage() {
           {showCourseForm && (
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>{editingCourse ? "Edit Course" : "Add New Course"}</CardTitle>
+                <CardTitle>
+                  {editingCourse ? "Edit Course" : "Add New Course"}
+                </CardTitle>
                 <CardDescription>
-                  {editingCourse ? "Update course information" : "Create a new course for the platform"}
+                  {editingCourse
+                    ? "Update course information"
+                    : "Create a new course for the platform"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -528,7 +652,9 @@ export default function ManagerPage() {
                   <Input
                     id="course-title"
                     value={courseForm.title}
-                    onChange={(e) => setCourseForm({ ...courseForm, title: e.target.value })}
+                    onChange={(e) =>
+                      setCourseForm({ ...courseForm, title: e.target.value })
+                    }
                     placeholder="Enter course title"
                   />
                 </div>
@@ -537,14 +663,23 @@ export default function ManagerPage() {
                   <textarea
                     id="course-description"
                     value={courseForm.description}
-                    onChange={(e) => setCourseForm({ ...courseForm, description: e.target.value })}
+                    onChange={(e) =>
+                      setCourseForm({
+                        ...courseForm,
+                        description: e.target.value,
+                      })
+                    }
                     placeholder="Enter course description"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
                   />
                 </div>
                 <div className="flex space-x-2">
-                  <Button onClick={editingCourse ? handleUpdateCourse : handleCreateCourse}>
+                  <Button
+                    onClick={
+                      editingCourse ? handleUpdateCourse : handleCreateCourse
+                    }
+                  >
                     {editingCourse ? "Update Course" : "Create Course"}
                   </Button>
                   <Button variant="outline" onClick={resetForms}>
@@ -565,15 +700,23 @@ export default function ManagerPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">{course.modules.length} modules</span>
+                    <span className="text-sm text-gray-600">
+                      {course.modules.length} modules
+                    </span>
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEditCourse(course)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditCourse(course)}
+                      >
                         <Edit className="w-4 h-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setDeleteConfirm({ type: "course", id: course.id })}
+                        onClick={() =>
+                          setDeleteConfirm({ type: "course", id: course.id })
+                        }
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -590,7 +733,9 @@ export default function ManagerPage() {
       {activeTab === "modules" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-semibold text-gray-900">All Modules</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              All Modules
+            </h2>
             <Button onClick={() => setShowModuleForm(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Add Module
@@ -601,9 +746,13 @@ export default function ManagerPage() {
           {showModuleForm && (
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>{editingModule ? "Edit Module" : "Add New Module"}</CardTitle>
+                <CardTitle>
+                  {editingModule ? "Edit Module" : "Add New Module"}
+                </CardTitle>
                 <CardDescription>
-                  {editingModule ? "Update module information" : "Create a new module for a course"}
+                  {editingModule
+                    ? "Update module information"
+                    : "Create a new module for a course"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -612,7 +761,9 @@ export default function ManagerPage() {
                   <select
                     id="module-course"
                     value={moduleForm.courseId}
-                    onChange={(e) => setModuleForm({ ...moduleForm, courseId: e.target.value })}
+                    onChange={(e) =>
+                      setModuleForm({ ...moduleForm, courseId: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     disabled={!!editingModule}
                   >
@@ -629,7 +780,9 @@ export default function ManagerPage() {
                   <Input
                     id="module-name"
                     value={moduleForm.name}
-                    onChange={(e) => setModuleForm({ ...moduleForm, name: e.target.value })}
+                    onChange={(e) =>
+                      setModuleForm({ ...moduleForm, name: e.target.value })
+                    }
                     placeholder="Enter module name"
                   />
                 </div>
@@ -638,7 +791,12 @@ export default function ManagerPage() {
                   <textarea
                     id="module-description"
                     value={moduleForm.description}
-                    onChange={(e) => setModuleForm({ ...moduleForm, description: e.target.value })}
+                    onChange={(e) =>
+                      setModuleForm({
+                        ...moduleForm,
+                        description: e.target.value,
+                      })
+                    }
                     placeholder="Enter module description"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     rows={3}
@@ -650,7 +808,12 @@ export default function ManagerPage() {
                     id="class-count"
                     type="number"
                     value={moduleForm.classCount}
-                    onChange={(e) => setModuleForm({ ...moduleForm, classCount: Number.parseInt(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      setModuleForm({
+                        ...moduleForm,
+                        classCount: Number.parseInt(e.target.value) || 0,
+                      })
+                    }
                     placeholder="Enter number of classes"
                     min="0"
                   />
@@ -662,7 +825,9 @@ export default function ManagerPage() {
                       value={topicInput}
                       onChange={(e) => setTopicInput(e.target.value)}
                       placeholder="Enter a topic"
-                      onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addTopic())}
+                      onKeyPress={(e) =>
+                        e.key === "Enter" && (e.preventDefault(), addTopic())
+                      }
                     />
                     <Button type="button" onClick={addTopic}>
                       <Plus className="w-4 h-4" />
@@ -687,7 +852,11 @@ export default function ManagerPage() {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <Button onClick={editingModule ? handleUpdateModule : handleCreateModule}>
+                  <Button
+                    onClick={
+                      editingModule ? handleUpdateModule : handleCreateModule
+                    }
+                  >
                     {editingModule ? "Update Module" : "Create Module"}
                   </Button>
                   <Button variant="outline" onClick={resetForms}>
@@ -702,28 +871,46 @@ export default function ManagerPage() {
           <div className="space-y-6">
             {courses.map((course) => (
               <div key={course.id}>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">{course.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                  {course.title}
+                </h3>
                 {course.modules.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {course.modules.map((module) => (
                       <Card key={module.id}>
                         <CardHeader>
-                          <CardTitle className="text-base">{module.name}</CardTitle>
-                          <CardDescription className="text-sm">{module.description}</CardDescription>
+                          <CardTitle className="text-base">
+                            {module.name}
+                          </CardTitle>
+                          <CardDescription className="text-sm">
+                            {module.description}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">{module.classCount} classes</span>
+                              <span className="text-sm text-gray-600">
+                                {module.classCount} classes
+                              </span>
                               <div className="flex space-x-2">
-                                <Button size="sm" variant="outline" onClick={() => handleEditModule(module, course.id)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    handleEditModule(module, course.id)
+                                  }
+                                >
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   onClick={() =>
-                                    setDeleteConfirm({ type: "module", id: module.id, courseId: course.id })
+                                    setDeleteConfirm({
+                                      type: "module",
+                                      id: module.id,
+                                      courseId: course.id,
+                                    })
                                   }
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -740,7 +927,9 @@ export default function ManagerPage() {
                                 </span>
                               ))}
                               {module.topics.length > 3 && (
-                                <span className="text-xs text-gray-500">+{module.topics.length - 3} more</span>
+                                <span className="text-xs text-gray-500">
+                                  +{module.topics.length - 3} more
+                                </span>
                               )}
                             </div>
                           </div>
@@ -749,7 +938,9 @@ export default function ManagerPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 italic">No modules in this course yet.</p>
+                  <p className="text-gray-500 italic">
+                    No modules in this course yet.
+                  </p>
                 )}
               </div>
             ))}
@@ -757,5 +948,5 @@ export default function ManagerPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

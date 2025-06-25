@@ -17,7 +17,6 @@ interface UserContextType {
     username: string,
     email: string,
     password: string,
-    role: "normal_user" | "social_media_manager" | "student",
   ) => Promise<boolean>;
 }
 
@@ -27,23 +26,75 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:1337/api/users/me", { credentials: "include" })
+    const jwt = localStorage.getItem("jwt");
+    if (!jwt) return;
+
+    fetch("http://localhost:1337/api/users/me?populate=role", {
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => data && setUser(data))
-      .catch(() => {});
+      .then((data) => {
+        if (!data) return;
+        setUser({
+          id: data.id,
+          username: data.username,
+          email: data.email,
+          role: data.role?.type || "normal_user",
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to fetch user", err);
+      });
   }, []);
+
+  const getCurrentUserRoleType = async () => {
+    try {
+      const jwt = localStorage.getItem("jwt");
+      if (!jwt) return "public";
+
+      const response = await fetch(
+        "http://localhost:1337/api/users/me?populate=role",
+        {
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        return "public";
+      }
+
+      const userData = await response.json();
+      return userData.role?.type || "public";
+    } catch (error) {
+      return "public";
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const res = await fetch("http://localhost:1337/api/auth/local/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // for cookies if using session auth
+      credentials: "include",
       body: JSON.stringify({ identifier: email, password }),
     });
 
     if (res.ok) {
-      const userData = await res.json();
-      setUser(userData);
+      const data = await res.json();
+      localStorage.setItem("jwt", data.jwt);
+
+      setUser({
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        role: await getCurrentUserRoleType(),
+      });
+
       return true;
     }
 
@@ -52,6 +103,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     setUser(null);
+    localStorage.removeItem("jwt");
   };
 
   const register = async (
@@ -67,15 +119,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     if (res.ok) {
-      // console.log(res);
-      const userData = await res.json();
-      setUser(userData);
+      const data = await res.json();
+      localStorage.setItem("jwt", data.jwt);
+
+      setUser({
+        id: data.user.id,
+        username: data.user.username,
+        email: data.user.email,
+        role: await getCurrentUserRoleType(),
+      });
+
       return true;
     }
 
     return false;
   };
-
   return (
     <UserContext.Provider value={{ user, login, logout, register }}>
       {children}

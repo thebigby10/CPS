@@ -91,7 +91,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+          {/* <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <p className="text-xs text-gray-600 mb-2">Demo accounts:</p>
             <p className="text-xs text-gray-500">
               Student: student@example.com
@@ -100,7 +100,7 @@ export default function LoginPage() {
               Manager: manager@example.com
             </p>
             <p className="text-xs text-gray-500">Password: any</p>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>

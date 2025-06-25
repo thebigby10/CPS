@@ -1,11 +1,13 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useUser } from "@/contexts/user-context"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { useUser } from "@/contexts/user-context";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
-  const { user, logout } = useUser()
+  const { user, logout } = useUser();
+
+  // console.log(user);
 
   return (
     <nav className="bg-white shadow-lg border-b">
@@ -17,11 +19,14 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden md:flex space-x-4">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+              <Link
+                href="/"
+                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+              >
                 Home
               </Link>
 
-              {user?.role === "Student" && (
+              {user && user?.role == "student" && (
                 <Link
                   href="/courses"
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
@@ -30,7 +35,7 @@ export default function Navbar() {
                 </Link>
               )}
 
-              {user?.role === "Social Media Manager" && (
+              {user && user?.role === "social_media_manager" && (
                 <Link
                   href="/manager"
                   className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
@@ -45,7 +50,7 @@ export default function Navbar() {
             {user ? (
               <>
                 <span className="text-sm text-gray-600 hidden sm:block">
-                  {user.name} ({user.role})
+                  {user.username} ({user.role})
                 </span>
                 <Button onClick={logout} variant="outline" size="sm">
                   Logout
@@ -67,5 +72,5 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
-  )
+  );
 }

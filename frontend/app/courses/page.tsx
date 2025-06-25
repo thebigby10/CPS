@@ -1,26 +1,28 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { useUser } from "@/contexts/user-context"
-import { mockCourses, mockEnrolledCourses } from "@/lib/mock-data"
-import CourseCard from "@/components/course-card"
-import { useEffect } from "react"
+import { useRouter } from "next/navigation";
+import { useUser } from "@/contexts/user-context";
+import { mockCourses, mockEnrolledCourses } from "@/lib/mock-data";
+import CourseCard from "@/components/course-card";
+import { useEffect } from "react";
 
 export default function CoursesPage() {
-  const { user } = useUser()
-  const router = useRouter()
+  const { user } = useUser();
+  const router = useRouter();
 
   useEffect(() => {
-    if (!user || user.role !== "Student") {
-      router.push("/")
+    if (!user || user.role !== "student") {
+      router.push("/");
     }
-  }, [user, router])
+  }, [user, router]);
 
-  if (!user || user.role !== "Student") {
-    return null
+  if (!user || user.role !== "student") {
+    return null;
   }
 
-  const enrolledCourses = mockCourses.filter((course) => mockEnrolledCourses.includes(course.id))
+  const enrolledCourses = mockCourses.filter((course) =>
+    mockEnrolledCourses.includes(course.id),
+  );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -42,9 +44,11 @@ export default function CoursesPage() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">You are not enrolled in any courses yet.</p>
+          <p className="text-gray-600 text-lg">
+            You are not enrolled in any courses yet.
+          </p>
         </div>
       )}
     </div>
-  )
+  );
 }
