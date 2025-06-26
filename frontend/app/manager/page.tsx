@@ -8,6 +8,10 @@ import type { Course, Module, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { fetchCourses, fetchUsers } from "@/lib/api";
+
+const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
+
 import {
   Card,
   CardContent,
@@ -42,8 +46,8 @@ interface ModuleFormData {
 export default function ManagerPage() {
   const { user } = useUser();
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>(mockCourses);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // Initialize as empty array
   const [activeTab, setActiveTab] = useState<
     "courses" | "modules" | "enrollment"
   >("courses");
@@ -76,6 +80,9 @@ export default function ManagerPage() {
   const [roleFilter, setRoleFilter] = useState<"all" | User["role"]>("all");
   const [editingUserRole, setEditingUserRole] = useState<User | null>(null);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   // Delete confirmation states
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: "course" | "module";
@@ -86,27 +93,69 @@ export default function ManagerPage() {
   useEffect(() => {
     if (!user || user.role !== "social_media_manager") {
       router.push("/");
+      return;
     }
+
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const [coursesData, usersData] = await Promise.all([
+          fetchCourses(),
+          fetchUsers(),
+        ]);
+        setCourses(coursesData);
+        setUsers(usersData);
+        // console.log(usersData);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        setError("Failed to load data. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+    // console.log(users, courses);
   }, [user, router]);
 
   if (!user || user.role !== "social_media_manager") {
     return null;
+  } else {
   }
 
   // Course CRUD operations
-  const handleCreateCourse = () => {
+  const handleCreateCourse = async () => {
     if (!courseForm.title.trim() || !courseForm.description.trim()) return;
 
-    const newCourse: Course = {
-      id: Date.now().toString(),
-      title: courseForm.title,
-      description: courseForm.description,
-      modules: [],
-    };
+    try {
+      const res = await fetch(`${API_URL}/api/courses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: {
+            Title: courseForm.title,
+            Description: courseForm.description,
+          },
+        }),
+      });
 
-    setCourses([...courses, newCourse]);
-    setCourseForm({ title: "", description: "" });
-    setShowCourseForm(false);
+      const data = await res.json();
+      const newCourse = {
+        title: data.data.title,
+        description: data.data.description,
+        modules: [],
+      };
+
+      setCourses([...courses, newCourse]);
+      setCourseForm({ title: "", description: "" });
+      setShowCourseForm(false);
+    } catch (error) {
+      console.error("Failed to create course:", error);
+      // Show error to user
+    }
   };
 
   const handleEditCourse = (course: Course) => {
