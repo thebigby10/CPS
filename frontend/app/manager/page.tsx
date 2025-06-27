@@ -160,7 +160,8 @@ export default function ManagerPage() {
     setShowCourseForm(true);
   };
 
-  const handleUpdateCourse = () => {
+  const handleUpdateCourse = async () => {
+    // Make this async
     if (
       !editingCourse ||
       !courseForm.title.trim() ||
@@ -168,26 +169,48 @@ export default function ManagerPage() {
     )
       return;
 
-    setCourses(
-      courses.map((course) =>
-        course.id === editingCourse.id
-          ? {
-              ...course,
-              title: courseForm.title,
-              description: courseForm.description,
-            }
-          : course,
-      ),
-    );
+    try {
+      // Call the API to update the course
+      const updatedCourse = await updateCourse(editingCourse.id, {
+        title: courseForm.title,
+        description: courseForm.description,
+      });
 
-    setEditingCourse(null);
-    setCourseForm({ title: "", description: "" });
-    setShowCourseForm(false);
+      // Update local state with the response from the API
+      setCourses(
+        courses.map((course) =>
+          course.id === editingCourse.id
+            ? {
+                ...course,
+                title: updatedCourse.title,
+                description: updatedCourse.description,
+              }
+            : course,
+        ),
+      );
+
+      setEditingCourse(null);
+      setCourseForm({ title: "", description: "" });
+      setShowCourseForm(false);
+    } catch (error) {
+      console.error("Failed to update course:", error);
+      // Optionally show an error message to the user
+    }
   };
 
-  const handleDeleteCourse = (courseId: string) => {
-    setCourses(courses.filter((c) => c.id !== courseId));
-    setDeleteConfirm(null);
+  const handleDeleteCourse = async (courseId: string) => {
+    try {
+      // 1. Call API to delete on the server
+      await deleteCourse(courseId);
+
+      // 2. Update local state only if API succeeds
+      setCourses(courses.filter((c) => c.id !== courseId));
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Failed to delete course:", error);
+      // Optionally show an error message to the user
+      alert("Failed to delete course. Please try again.");
+    }
   };
 
   // Module CRUD operations
