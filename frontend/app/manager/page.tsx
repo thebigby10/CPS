@@ -8,7 +8,17 @@ import type { Course, Module, User } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { fetchCourses, fetchUsers } from "@/lib/api";
+import {
+  fetchCourses,
+  fetchUsers,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  createModule,
+  updateModule,
+  deleteModule,
+  updateUserRole,
+} from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 
@@ -125,40 +135,26 @@ export default function ManagerPage() {
   }
 
   // Course CRUD operations
+
   const handleCreateCourse = async () => {
     if (!courseForm.title.trim() || !courseForm.description.trim()) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/courses`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          data: {
-            Title: courseForm.title,
-            Description: courseForm.description,
-          },
-        }),
+      const newCourse = await createCourse({
+        Title: courseForm.title,
+        Description: courseForm.description,
       });
-
-      const data = await res.json();
-      const newCourse = {
-        title: data.data.title,
-        description: data.data.description,
-        modules: [],
-      };
-
       setCourses([...courses, newCourse]);
       setCourseForm({ title: "", description: "" });
       setShowCourseForm(false);
     } catch (error) {
       console.error("Failed to create course:", error);
-      // Show error to user
+      setError("Failed to create course. Please try again.");
     }
   };
 
   const handleEditCourse = (course: Course) => {
+    console.log(course);
     setEditingCourse(course);
     setCourseForm({ title: course.title, description: course.description });
     setShowCourseForm(true);
@@ -205,9 +201,9 @@ export default function ManagerPage() {
 
     const newModule: Module = {
       id: Date.now().toString(),
-      name: moduleForm.name,
-      description: moduleForm.description,
-      classCount: moduleForm.classCount,
+      Name: moduleForm.name,
+      Details: moduleForm.description,
+      NumberOfClasses: moduleForm.classCount,
       topics: moduleForm.topics,
     };
 

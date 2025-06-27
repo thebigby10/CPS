@@ -7,15 +7,15 @@ export interface User {
 
 export interface Course {
   id: string;
-  title: string;
-  description: string;
+  Title: string;
+  Description: string;
   modules: Module[];
 }
 
 export interface Module {
   id: string;
-  name: string;
-  description: string;
-  classCount: number;
-  topics: string[];
+  Name: string;
+  Description: string;
+  NumberOfClasses: number;
+  TopicsCovered: string[];
 }
