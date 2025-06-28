@@ -422,16 +422,16 @@ export default function ManagerPage() {
     const matchesSearch =
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+    const matchesRole = roleFilter == "all" || u.role == roleFilter;
     return matchesSearch && matchesRole;
   });
 
   // Get role statistics
   const roleStats = {
     total: users.length,
-    students: users.filter((u) => u.role === "student").length,
-    normalUsers: users.filter((u) => u.role === "normal_user").length,
-    managers: users.filter((u) => u.role === "social_media_manager").length,
+    students: users.filter((u) => u.role == "student").length,
+    normalUsers: users.filter((u) => u.role == "normal_user").length,
+    managers: users.filter((u) => u.role == "social_media_manager").length,
   };
 
   const getRoleIcon = (role: User["role"]) => {

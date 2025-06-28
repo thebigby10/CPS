@@ -1,35 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 
-// export async function fetchCourses(): Promise<Course[]> {
-//   const jwt = localStorage.getItem("jwt");
-//   const res = await fetch(`${API_URL}/api/courses?populate=modules`, {
-//     credentials: "include",
-//     headers: {
-//       Authorization: `Bearer ${jwt}`,
-//     },
-//   });
-//   const data = await res.json();
-
-//   // data.data.map((item: any) => {
-//   //   console.log(item.id, item.Title, item.Description);
-//   // });
-//   // console.log(data.data);
-//   return data.data.map((item: any) => ({
-//     id: item.documentId,
-//     title: item.Title,
-//     description: item.Description,
-//     modules:
-//       item.modules?.data?.map((module: any) => ({
-//         id: module.id.toString(),
-//         name: module.Name,
-//         description: module.Details,
-//         classCount: module.NumberOfClasses,
-//         topics: module.TopicsCovered || [],
-//       })) || [],
-//   }));
-//   // console.log(data);
-// }
-//
 export async function fetchCourses(): Promise<Course[]> {
   const jwt = localStorage.getItem("jwt");
   let res;
@@ -76,7 +46,7 @@ export async function fetchUsers(): Promise<User[]> {
   // console.log(`${API_URL}/api/users`);
   // console.log(res.status);
   // console.log(data);
-  // console.log(data);
+  console.log(data[0].role);
   return data.map((user: any) => ({
     id: user.id.toString(),
     name: user.username,
@@ -158,40 +128,6 @@ export const deleteCourse = async (id: string): Promise<void> => {
   });
 };
 
-// Create a new module
-// export const createModule = async (moduleData: {
-//   name: string;
-//   description: string;
-//   classCount: number;
-//   topics: string[];
-//   courseId: string;
-// }): Promise<Module> => {
-//   const res = await fetch(`${API_URL}/api/modules`, {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-//     },
-//     body: JSON.stringify({
-//       data: {
-//         Name: moduleData.name,
-//         Details: moduleData.description,
-//         NumberOfClasses: moduleData.classCount,
-//         TopicsCovered: moduleData.topics,
-//         course: moduleData.courseId,
-//       },
-//     }),
-//   });
-//   const data = await res.json();
-//   console.log("data send?");
-//   return {
-//     id: data.data.id,
-//     name: data.data.name,
-//     Details: data.data.description,
-//     classCount: data.data.classCount,
-//     topics: data.data.topics,
-//   };
-// };
 export const createModule = async (moduleData: {
   name: string;
   description: string;
@@ -244,42 +180,6 @@ export const createModule = async (moduleData: {
   };
 };
 
-// Update a module
-// export const updateModule = async (
-//   id: string,
-//   moduleData: {
-//     name: string;
-//     description: string;
-//     classCount: number;
-//     topics: string[];
-//     courseId: string;
-//   },
-// ): Promise<Module> => {
-//   const res = await fetch(`${API_URL}/api/modules/${id}`, {
-//     method: "PUT",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-//     },
-//     body: JSON.stringify({
-//       data: {
-//         name: moduleData.name,
-//         description: moduleData.description,
-//         classCount: moduleData.classCount,
-//         topics: moduleData.topics,
-//         course: moduleData.courseId,
-//       },
-//     }),
-//   });
-//   const data = await res.json();
-//   return {
-//     id: data.data.id,
-//     name: data.data.attributes.name,
-//     description: data.data.attributes.description,
-//     classCount: data.data.attributes.classCount,
-//     topics: data.data.attributes.topics,
-//   };
-// };
 export const updateModule = async (
   id: string,
   moduleData: {
@@ -347,13 +247,6 @@ export const updateModule = async (
   };
 };
 
-// Delete a module
-// export const deleteModule = async (id: string): Promise<void> => {
-//   await fetch(`${API_URL}/api/modules/${id}`, {
-//     method: "DELETE",
-//     Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-//   });
-// };
 export const deleteModule = async (id: string): Promise<void> => {
   const res = await fetch(`${API_URL}/api/modules/${id}`, {
     method: "DELETE",
@@ -368,62 +261,6 @@ export const deleteModule = async (id: string): Promise<void> => {
     throw new Error(errorData.message || "Failed to delete module");
   }
 };
-
-// Update user role
-// export const updateUserRole = async (
-//   id: string,
-//   role: User["role"],
-// ): Promise<User> => {
-//   console.log(role);
-//   const res = await fetch(`${API_URL}/api/users/${id}`, {
-//     method: "PUT",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-//     },
-//     body: JSON.stringify({
-//       role,
-//     }),
-//   });
-//   const data = await res.json();
-//   return {
-//     id: data.id,
-//     name: data.username,
-//     email: data.email,
-//     role: data.role,
-//   };
-// };
-// export const updateUserRole = async (
-//   id: string,
-//   role: User["role"],
-// ): Promise<User> => {
-//   const res = await fetch(`${API_URL}/api/users/${id}`, {
-//     method: "PUT",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
-//     },
-//     body: JSON.stringify({
-//       role, // Remove data wrapper if your API doesn't expect it
-//     }),
-//   });
-
-//   if (!res.ok) {
-//     const errorData = await res.json().catch(() => ({}));
-//     throw new Error(errorData.message || "Failed to update user role");
-//   }
-
-//   const data = await res.json();
-
-//   // Ensure you're returning a properly formatted User object
-//   return {
-//     id: data.id || id, // Fallback to original id if not in response
-//     name: data.username || data.name || "", // Handle different response formats
-//     email: data.email || "",
-//     role: data.role || role, // Fallback to original role if not in response
-//   };
-// };
-//
 
 export const updateUserRole = async (
   id: string,
@@ -457,74 +294,6 @@ export const updateUserRole = async (
     role: data.role?.name || "", // You can keep role ID if preferred
   };
 };
-
-// export async function fetchCurrentUserCourses(): Promise<Course[]> {
-//   const jwt = localStorage.getItem("jwt");
-//   if (!jwt) {
-//     throw new Error("No JWT token found");
-//   }
-
-//   const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
-//     credentials: "include",
-//     headers: {
-//       Authorization: `Bearer ${jwt}`,
-//     },
-//   });
-
-//   if (!res.ok) {
-//     throw new Error("Failed to fetch user courses");
-//   }
-
-//   const data = await res.json();
-
-//   return (
-//     data.courses?.map((course: any) => ({
-//       id: course.documentId,
-//       title: course.Title,
-//       description: course.Description,
-//       modules: [], // You might want to populate this if needed
-//     })) || []
-//   );
-// }
-
-// export async function fetchCurrentUserCourses(): Promise<Course[]> {
-//   const jwt = localStorage.getItem("jwt");
-//   if (!jwt) {
-//     throw new Error("No JWT token found");
-//   }
-
-//   const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
-//     credentials: "include",
-//     headers: {
-//       Authorization: `Bearer ${jwt}`,
-//     },
-//   });
-
-//   if (!res.ok) {
-//     throw new Error("Failed to fetch user courses");
-//   }
-
-//   const data = await res.json();
-
-//   // Create a map to filter out duplicates by documentId
-//   const coursesMap = new Map<string, Course>();
-
-//   data.courses?.forEach((course: any) => {
-//     // Only add the course if we haven't seen this documentId before
-//     if (!coursesMap.has(course.documentId)) {
-//       // Fixed: Added missing parenthesis
-//       coursesMap.set(course.documentId, {
-//         id: course.documentId,
-//         title: course.Title,
-//         description: course.Description,
-//         modules: [], // You might want to populate this if needed
-//       });
-//     }
-//   });
-
-//   return Array.from(coursesMap.values());
-// }
-
 export async function fetchCurrentUserCourses(): Promise<Course[]> {
   const jwt = localStorage.getItem("jwt");
   if (!jwt) {
@@ -670,11 +439,11 @@ export async function fetchEnrollments(): Promise<Enrollment[]> {
   // console.log("Users:", users);
   // console.log("Courses:", courses);
   // console.log(users);
-  enrollments.forEach((data) => {
-    console.log(data.userId);
-    console.log(data.courseId);
-    console.log();
-  });
+  // enrollments.forEach((data) => {
+  //   console.log(data.userId);
+  //   console.log(data.courseId);
+  //   console.log();
+  // });
   // console.log("Enrollments:", enrollments);
 
   return enrollments;
