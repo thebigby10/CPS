@@ -19,3 +19,10 @@ type Module = {
   classCount: number;
   topics: string[];
 };
+
+export interface Enrollment {
+  id: string;
+  userId: number;
+  courseId: string;
+  enrolledAt: string;
+}

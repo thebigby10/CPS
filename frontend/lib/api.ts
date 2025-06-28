@@ -76,6 +76,7 @@ export async function fetchUsers(): Promise<User[]> {
   // console.log(`${API_URL}/api/users`);
   // console.log(res.status);
   // console.log(data);
+  // console.log(data);
   return data.map((user: any) => ({
     id: user.id.toString(),
     name: user.username,
@@ -628,4 +629,107 @@ export async function fetchCourseById(id: string): Promise<Course> {
           : [],
       })) || [],
   };
+}
+
+// new files
+//
+//
+// Add to api.ts
+
+// Fetch enrollments
+export async function fetchEnrollments(): Promise<Enrollment[]> {
+  const jwt = localStorage.getItem("jwt");
+  const res = await fetch(`${API_URL}/api/courses?populate=users`, {
+    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${jwt || ""}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch enrollments");
+  }
+
+  const data = await res.json();
+
+  // console.log(data.data);
+
+  // Transform the data into Enrollment array
+  const enrollments: Enrollment[] = [];
+  data.data.forEach((course: any) => {
+    course.users?.forEach((user: any) => {
+      enrollments.push({
+        id: `${course.id}-${user.id}`,
+        userId: user.id,
+        courseId: course.documentId,
+        enrolledAt: new Date().toISOString(), // You might want to get this from the API if available
+      });
+    });
+  });
+
+  // console.log("Users:", users);
+  // console.log("Courses:", courses);
+  // console.log(users);
+  enrollments.forEach((data) => {
+    console.log(data.userId);
+    console.log(data.courseId);
+    console.log();
+  });
+  // console.log("Enrollments:", enrollments);
+
+  return enrollments;
+}
+
+// Enroll user in course
+export async function enrollUser(
+  userId: number,
+  courseId: string,
+): Promise<void> {
+  const jwt = localStorage.getItem("jwt");
+  const res = await fetch(`${API_URL}/api/courses/${courseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${jwt || ""}`,
+    },
+    body: JSON.stringify({
+      data: {
+        users: {
+          connect: [userId],
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || "Failed to enroll user");
+  }
+}
+
+// Unenroll user from course
+export async function unenrollUser(
+  userId: number,
+  courseId: string,
+): Promise<void> {
+  const jwt = localStorage.getItem("jwt");
+  const res = await fetch(`${API_URL}/api/courses/${courseId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${jwt || ""}`,
+    },
+    body: JSON.stringify({
+      data: {
+        users: {
+          disconnect: [userId],
+        },
+      },
+    }),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error?.message || "Failed to unenroll user");
+  }
 }

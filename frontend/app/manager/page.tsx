@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/user-context";
 import { mockCourses, mockUsers } from "@/lib/mock-data";
-import type { Course, Module, User } from "@/lib/types";
+import type { Course, Module, User, Enrollment } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +18,10 @@ import {
   updateModule,
   deleteModule,
   updateUserRole,
+  enrollUser,
+  unenrollUser,
+  fetchEnrollments,
 } from "@/lib/api";
-
-const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 
 import {
   Card,
@@ -38,6 +39,7 @@ import {
   Crown,
   GraduationCap,
   UserIcon,
+  BookOpen,
 } from "lucide-react";
 
 interface CourseFormData {
@@ -57,9 +59,10 @@ export default function ManagerPage() {
   const { user } = useUser();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [users, setUsers] = useState<User[]>([]); // Initialize as empty array
+  const [users, setUsers] = useState<User[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [activeTab, setActiveTab] = useState<
-    "courses" | "modules" | "enrollment"
+    "courses" | "modules" | "users" | "enrollment"
   >("courses");
 
   // Course form states
@@ -85,19 +88,24 @@ export default function ManagerPage() {
   });
   const [topicInput, setTopicInput] = useState("");
 
-  // Enrollment states
+  // User management states
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | User["role"]>("all");
   const [editingUserRole, setEditingUserRole] = useState<User | null>(null);
+
+  // Enrollment states
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Delete confirmation states
   const [deleteConfirm, setDeleteConfirm] = useState<{
-    type: "course" | "module";
+    type: "course" | "module" | "enrollment";
     id: string;
     courseId?: string;
+    userId?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -110,13 +118,14 @@ export default function ManagerPage() {
       setLoading(true);
       setError(null);
       try {
-        const [coursesData, usersData] = await Promise.all([
+        const [coursesData, usersData, enrollmentsData] = await Promise.all([
           fetchCourses(),
           fetchUsers(),
+          fetchEnrollments(),
         ]);
         setCourses(coursesData);
         setUsers(usersData);
-        // console.log(usersData);
+        setEnrollments(enrollmentsData);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setError("Failed to load data. Please try again later.");
@@ -126,16 +135,13 @@ export default function ManagerPage() {
     };
 
     loadData();
-    // console.log(users, courses);
   }, [user, router]);
 
   if (!user || user.role !== "social_media_manager") {
     return null;
-  } else {
   }
 
   // Course CRUD operations
-
   const handleCreateCourse = async () => {
     if (!courseForm.title.trim() || !courseForm.description.trim()) return;
 
@@ -154,14 +160,12 @@ export default function ManagerPage() {
   };
 
   const handleEditCourse = (course: Course) => {
-    console.log(course);
     setEditingCourse(course);
     setCourseForm({ title: course.title, description: course.description });
     setShowCourseForm(true);
   };
 
   const handleUpdateCourse = async () => {
-    // Make this async
     if (
       !editingCourse ||
       !courseForm.title.trim() ||
@@ -170,13 +174,11 @@ export default function ManagerPage() {
       return;
 
     try {
-      // Call the API to update the course
       const updatedCourse = await updateCourse(editingCourse.id, {
         title: courseForm.title,
         description: courseForm.description,
       });
 
-      // Update local state with the response from the API
       setCourses(
         courses.map((course) =>
           course.id === editingCourse.id
@@ -194,72 +196,21 @@ export default function ManagerPage() {
       setShowCourseForm(false);
     } catch (error) {
       console.error("Failed to update course:", error);
-      // Optionally show an error message to the user
     }
   };
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
-      // 1. Call API to delete on the server
       await deleteCourse(courseId);
-
-      // 2. Update local state only if API succeeds
       setCourses(courses.filter((c) => c.id !== courseId));
       setDeleteConfirm(null);
     } catch (error) {
       console.error("Failed to delete course:", error);
-      // Optionally show an error message to the user
       alert("Failed to delete course. Please try again.");
     }
   };
 
   // Module CRUD operations
-  // const handleCreateModule = async () => {
-  //   if (
-  //     !moduleForm.name.trim() ||
-  //     !moduleForm.description.trim() ||
-  //     !moduleForm.courseId
-  //   ) {
-  //     return;
-  //   }
-
-  //   try {
-  //     // Call API to create module on server
-  //     const newModule = await createModule({
-  //       name: moduleForm.name,
-  //       description: moduleForm.description,
-  //       classCount: moduleForm.classCount,
-  //       topics: moduleForm.topics,
-  //       courseId: moduleForm.courseId,
-  //     });
-
-  //     // Update local state with server response
-  //     setCourses(
-  //       courses.map((course) =>
-  //         course.id === moduleForm.courseId
-  //           ? {
-  //               ...course,
-  //               modules: [...course.modules, newModule],
-  //             }
-  //           : course,
-  //       ),
-  //     );
-
-  //     // Reset form
-  //     setModuleForm({
-  //       name: "",
-  //       description: "",
-  //       classCount: 0,
-  //       topics: [],
-  //       courseId: "",
-  //     });
-  //     setShowModuleForm(false);
-  //   } catch (error) {
-  //     console.error("Failed to create module:", error);
-  //     // Optionally show error to user
-  //     alert("Failed to create module. Please try again.");
-  //   }
-  // };
   const handleCreateModule = async () => {
     if (
       !moduleForm.name.trim() ||
@@ -270,7 +221,6 @@ export default function ManagerPage() {
     }
 
     try {
-      // Call API to create module on server
       const newModule = await createModule({
         name: moduleForm.name,
         description: moduleForm.description,
@@ -279,7 +229,6 @@ export default function ManagerPage() {
         courseId: moduleForm.courseId,
       });
 
-      // Update local state with server response
       setCourses(
         courses.map((course) =>
           course.id === moduleForm.courseId
@@ -291,7 +240,6 @@ export default function ManagerPage() {
         ),
       );
 
-      // Reset form
       setModuleForm({
         name: "",
         description: "",
@@ -302,7 +250,6 @@ export default function ManagerPage() {
       setShowModuleForm(false);
     } catch (error) {
       console.error("Failed to create module:", error);
-      // Optionally show error to user
       alert(error.message || "Failed to create module. Please try again.");
     }
   };
@@ -319,45 +266,6 @@ export default function ManagerPage() {
     setShowModuleForm(true);
   };
 
-  // const handleUpdateModule = () => {
-  //   if (
-  //     !editingModule ||
-  //     !moduleForm.name.trim() ||
-  //     !moduleForm.description.trim()
-  //   )
-  //     return;
-
-  //   setCourses(
-  //     courses.map((course) =>
-  //       course.id === editingModule.courseId
-  //         ? {
-  //             ...course,
-  //             modules: course.modules.map((module) =>
-  //               module.id === editingModule.module.id
-  //                 ? {
-  //                     ...module,
-  //                     name: moduleForm.name,
-  //                     description: moduleForm.description,
-  //                     classCount: moduleForm.classCount,
-  //                     topics: moduleForm.topics,
-  //                   }
-  //                 : module,
-  //             ),
-  //           }
-  //         : course,
-  //     ),
-  //   );
-
-  //   setEditingModule(null);
-  //   setModuleForm({
-  //     name: "",
-  //     description: "",
-  //     classCount: 0,
-  //     topics: [],
-  //     courseId: "",
-  //   });
-  //   setShowModuleForm(false);
-  // };
   const handleUpdateModule = async () => {
     if (
       !editingModule ||
@@ -368,7 +276,6 @@ export default function ManagerPage() {
     }
 
     try {
-      // Call API to update module
       const updatedModule = await updateModule(editingModule.module.id, {
         name: moduleForm.name,
         description: moduleForm.description,
@@ -377,7 +284,6 @@ export default function ManagerPage() {
         courseId: editingModule.courseId,
       });
 
-      // Update local state with API response
       setCourses(
         courses.map((course) =>
           course.id === editingModule.courseId
@@ -385,7 +291,7 @@ export default function ManagerPage() {
                 ...course,
                 modules: course.modules.map((module) =>
                   module.id === editingModule.module.id
-                    ? updatedModule // Use the API response
+                    ? updatedModule
                     : module,
                 ),
               }
@@ -408,25 +314,9 @@ export default function ManagerPage() {
     }
   };
 
-  // const handleDeleteModule = (courseId: string, moduleId: string) => {
-  //   setCourses(
-  //     courses.map((course) =>
-  //       course.id === courseId
-  //         ? {
-  //             ...course,
-  //             modules: course.modules.filter((m) => m.id !== moduleId),
-  //           }
-  //         : course,
-  //     ),
-  //   );
-  //   setDeleteConfirm(null);
-  // };
   const handleDeleteModule = async (courseId: string, moduleId: string) => {
     try {
-      // First delete from backend
       await deleteModule(moduleId);
-
-      // Only update UI if API call succeeds
       setCourses(
         courses.map((course) =>
           course.id === courseId
@@ -441,38 +331,11 @@ export default function ManagerPage() {
     } catch (error) {
       console.error("Failed to delete module:", error);
       alert(error.message || "Failed to delete module");
-      // Optionally revert UI here if you want to implement optimistic updates
     }
   };
 
-  // // User role management
-  // const handleUpdateUserRole = (userId: string, newRole: User["role"]) => {
-  //   setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
-  //   setEditingUserRole(null);
-  // };
-  // const handleUpdateUserRole = async (
-  //   userId: string,
-  //   newRole: User["role"],
-  // ) => {
-  //   try {
-  //     // Call API to update role
-  //     const updatedUser = await updateUserRole(userId, newRole);
-
-  //     // Update local state with API response
-  //     setUsers(users.map((u) => (u.id === userId ? updatedUser : u)));
-
-  //     setEditingUserRole(null);
-  //   } catch (error) {
-  //     console.error("Failed to update user role:", error);
-  //     alert(error.message || "Failed to update user role");
-  //     // Optionally revert UI here
-  //   }
-  // };
-
-  const handleUpdateUserRole = async (
-    userId: string,
-    newRoleId: number, // must be ID
-  ) => {
+  // User role management
+  const handleUpdateUserRole = async (userId: string, newRoleId: number) => {
     try {
       const updatedUser = await updateUserRole(userId, newRoleId);
       setUsers(users.map((u) => (u.id === userId ? updatedUser : u)));
@@ -480,6 +343,43 @@ export default function ManagerPage() {
     } catch (error: any) {
       console.error("Failed to update user role:", error);
       alert(error.message || "Failed to update user role");
+    }
+  };
+
+  // Enrollment operations
+  const handleEnrollUser = async () => {
+    if (!selectedUser || !selectedCourse) return;
+
+    try {
+      await enrollUser(selectedUser, selectedCourse);
+      setEnrollments([
+        ...enrollments,
+        {
+          id: `${selectedCourse}-${selectedUser}`,
+          userId: selectedUser,
+          courseId: selectedCourse,
+          enrolledAt: new Date().toISOString(),
+        },
+      ]);
+      setSelectedUser(null);
+      setSelectedCourse(null);
+    } catch (error) {
+      console.error("Failed to enroll user:", error);
+      setError("Failed to enroll user. Please try again.");
+    }
+  };
+
+  const handleUnenrollUser = async (
+    enrollmentId: string,
+    userId: number,
+    courseId: string,
+  ) => {
+    try {
+      await unenrollUser(userId, courseId);
+      setEnrollments(enrollments.filter((e) => e.id !== enrollmentId));
+    } catch (error) {
+      console.error("Failed to unenroll user:", error);
+      setError("Failed to unenroll user. Please try again.");
     }
   };
 
@@ -536,9 +436,9 @@ export default function ManagerPage() {
 
   const getRoleIcon = (role: User["role"]) => {
     switch (role) {
-      case "Student":
+      case "student":
         return <GraduationCap className="w-4 h-4" />;
-      case "Social Media Manager":
+      case "social_media_manager":
         return <Crown className="w-4 h-4" />;
       default:
         return <UserIcon className="w-4 h-4" />;
@@ -547,9 +447,9 @@ export default function ManagerPage() {
 
   const getRoleColor = (role: User["role"]) => {
     switch (role) {
-      case "Student":
+      case "student":
         return "bg-blue-100 text-blue-800";
-      case "Social Media Manager":
+      case "social_media_manager":
         return "bg-purple-100 text-purple-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -561,7 +461,7 @@ export default function ManagerPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Manager Panel</h1>
         <p className="text-gray-600">
-          Manage courses, modules, and user enrollments
+          Manage courses, modules, users, and enrollments
         </p>
       </div>
 
@@ -590,6 +490,17 @@ export default function ManagerPage() {
               Modules
             </button>
             <button
+              onClick={() => setActiveTab("users")}
+              className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
+                activeTab === "users"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              <Users className="w-4 h-4" />
+              <span>Users</span>
+            </button>
+            <button
               onClick={() => setActiveTab("enrollment")}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
                 activeTab === "enrollment"
@@ -597,8 +508,8 @@ export default function ManagerPage() {
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
-              <Users className="w-4 h-4" />
-              <span>Enrollment</span>
+              <BookOpen className="w-4 h-4" />
+              <span>Enrollments</span>
             </button>
           </nav>
         </div>
@@ -619,10 +530,16 @@ export default function ManagerPage() {
                 onClick={() => {
                   if (deleteConfirm.type === "course") {
                     handleDeleteCourse(deleteConfirm.id);
-                  } else {
+                  } else if (deleteConfirm.type === "module") {
                     handleDeleteModule(
                       deleteConfirm.courseId!,
                       deleteConfirm.id,
+                    );
+                  } else if (deleteConfirm.type === "enrollment") {
+                    handleUnenrollUser(
+                      deleteConfirm.id,
+                      deleteConfirm.userId!,
+                      deleteConfirm.courseId!,
                     );
                   }
                 }}
@@ -649,9 +566,9 @@ export default function ManagerPage() {
             <div className="space-y-3 mb-6">
               {(
                 [
-                  "Normal User",
-                  "Student",
-                  "Social Media Manager",
+                  "normal_user",
+                  "student",
+                  "social_media_manager",
                 ] as User["role"][]
               ).map((role) => (
                 <label
@@ -678,7 +595,14 @@ export default function ManagerPage() {
             <div className="flex space-x-4">
               <Button
                 onClick={() =>
-                  handleUpdateUserRole(editingUserRole.id, editingUserRole.role)
+                  handleUpdateUserRole(
+                    editingUserRole.id.toString(),
+                    editingUserRole.role === "student"
+                      ? 2
+                      : editingUserRole.role === "social_media_manager"
+                        ? 3
+                        : 1,
+                  )
                 }
               >
                 Update Role
@@ -691,165 +615,6 @@ export default function ManagerPage() {
               </Button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Enrollment Tab */}
-      {activeTab === "enrollment" && (
-        <div className="space-y-6">
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Users</p>
-                    <p className="text-2xl font-bold">{roleStats.total}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <GraduationCap className="w-5 h-5 text-blue-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Students</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {roleStats.students}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <UserIcon className="w-5 h-5 text-gray-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Normal Users</p>
-                    <p className="text-2xl font-bold text-gray-600">
-                      {roleStats.normalUsers}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-2">
-                  <Crown className="w-5 h-5 text-purple-600" />
-                  <div>
-                    <p className="text-sm text-gray-600">Managers</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {roleStats.managers}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div>
-              <select
-                value={roleFilter}
-                onChange={(e) =>
-                  setRoleFilter(e.target.value as typeof roleFilter)
-                }
-                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">All Roles</option>
-                <option value="Normal User">Normal Users</option>
-                <option value="Student">Students</option>
-                <option value="Social Media Manager">Managers</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Users Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Registered Users</CardTitle>
-              <CardDescription>
-                Manage user roles and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">
-                        User
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">
-                        Email
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">
-                        Role
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((u) => (
-                      <tr key={u.id} className="border-b hover:bg-gray-50">
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-blue-600">
-                                {u.name.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                            <span className="font-medium text-gray-900">
-                              {u.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">{u.email}</td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(u.role)}`}
-                          >
-                            {getRoleIcon(u.role)}
-                            <span>{u.role}</span>
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingUserRole(u)}
-                            disabled={u.id === user.id} // Prevent editing own role
-                          >
-                            <Edit className="w-4 h-4 mr-1" />
-                            Edit Role
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {filteredUsers.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No users found matching your criteria.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
@@ -1176,6 +941,281 @@ export default function ManagerPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Users Tab */}
+      {activeTab === "users" && (
+        <div className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Users</p>
+                    <p className="text-2xl font-bold">{roleStats.total}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <GraduationCap className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Students</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {roleStats.students}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <UserIcon className="w-5 h-5 text-gray-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Normal Users</p>
+                    <p className="text-2xl font-bold text-gray-600">
+                      {roleStats.normalUsers}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Crown className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Managers</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {roleStats.managers}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div>
+              <select
+                value={roleFilter}
+                onChange={(e) =>
+                  setRoleFilter(e.target.value as typeof roleFilter)
+                }
+                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="all">All Roles</option>
+                <option value="normal_user">Normal Users</option>
+                <option value="student">Students</option>
+                <option value="social_media_manager">Managers</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Users Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Registered Users</CardTitle>
+              <CardDescription>
+                Manage user roles and permissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        User
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Email
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Role
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((u) => (
+                      <tr key={u.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-blue-600">
+                                {u.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <span className="font-medium text-gray-900">
+                              {u.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">{u.email}</td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(u.role)}`}
+                          >
+                            {getRoleIcon(u.role)}
+                            <span>{u.role}</span>
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingUserRole(u)}
+                            disabled={u.id === user.id}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit Role
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filteredUsers.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No users found matching your criteria.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Enrollment Tab */}
+      {activeTab === "enrollment" && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Course Enrollment</CardTitle>
+              <CardDescription>Enroll users in courses</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Select User</Label>
+                  <select
+                    value={selectedUser || ""}
+                    onChange={(e) => setSelectedUser(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a user</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Select Course</Label>
+                  <select
+                    value={selectedCourse || ""}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a course</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <Button
+                onClick={handleEnrollUser}
+                disabled={!selectedUser || !selectedCourse}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Enroll User
+              </Button>
+
+              <div className="mt-6">
+                <h3 className="text-lg font-medium mb-2">
+                  Current Enrollments
+                </h3>
+                {enrollments.length === 0 ? (
+                  <p className="text-gray-500">No enrollments yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4">User</th>
+                          <th className="text-left py-3 px-4">Course</th>
+                          <th className="text-left py-3 px-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {enrollments.map((enrollment) => {
+                          const user = users.find(
+                            (u) => u.id == enrollment.userId,
+                          );
+                          const course = courses.find(
+                            (c) => c.id == enrollment.courseId,
+                          );
+                          return (
+                            <tr
+                              key={enrollment.id}
+                              className="border-b hover:bg-gray-50"
+                            >
+                              <td className="py-3 px-4">
+                                {user
+                                  ? `${user.name} (${user.email})`
+                                  : "Unknown user"}
+                              </td>
+                              <td className="py-3 px-4">
+                                {course ? course.title : "Unknown course"}
+                              </td>
+                              <td className="py-3 px-4">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    setDeleteConfirm({
+                                      type: "enrollment",
+                                      id: enrollment.id,
+                                      userId: enrollment.userId,
+                                      courseId: enrollment.courseId,
+                                    })
+                                  }
+                                >
+                                  <Trash2 className="w-4 h-4 mr-1" />
+                                  Unenroll
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
