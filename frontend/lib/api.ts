@@ -422,3 +422,102 @@ export const updateUserRole = async (
     role: data.role || role, // Fallback to original role if not in response
   };
 };
+
+// export async function fetchCurrentUserCourses(): Promise<Course[]> {
+//   const jwt = localStorage.getItem("jwt");
+//   if (!jwt) {
+//     throw new Error("No JWT token found");
+//   }
+
+//   const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
+//     credentials: "include",
+//     headers: {
+//       Authorization: `Bearer ${jwt}`,
+//     },
+//   });
+
+//   if (!res.ok) {
+//     throw new Error("Failed to fetch user courses");
+//   }
+
+//   const data = await res.json();
+
+//   return (
+//     data.courses?.map((course: any) => ({
+//       id: course.documentId,
+//       title: course.Title,
+//       description: course.Description,
+//       modules: [], // You might want to populate this if needed
+//     })) || []
+//   );
+// }
+
+export async function fetchCurrentUserCourses(): Promise<Course[]> {
+  const jwt = localStorage.getItem("jwt");
+  if (!jwt) {
+    throw new Error("No JWT token found");
+  }
+
+  const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
+    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch user courses");
+  }
+
+  const data = await res.json();
+
+  // Create a map to filter out duplicates by documentId
+  const coursesMap = new Map<string, Course>();
+
+  data.courses?.forEach((course: any) => {
+    // Only add the course if we haven't seen this documentId before
+    if (!coursesMap.has(course.documentId)) {
+      // Fixed: Added missing parenthesis
+      coursesMap.set(course.documentId, {
+        id: course.documentId,
+        title: course.Title,
+        description: course.Description,
+        modules: [], // You might want to populate this if needed
+      });
+    }
+  });
+
+  return Array.from(coursesMap.values());
+}
+
+export async function fetchCourseById(id: string): Promise<Course> {
+  const jwt = localStorage.getItem("jwt");
+  const res = await fetch(`${API_URL}/api/courses/${id}?populate=modules`, {
+    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${jwt || ""}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch course");
+  }
+
+  const data = await res.json();
+  console.log(data.data);
+  return {
+    id: data.data.documentId,
+    title: data.data.Title,
+    description: data.data.Description,
+    modules:
+      data.data.modules?.map((module: any) => ({
+        id: module.documentId,
+        name: module.Name,
+        description: module.Details[0]?.children[0]?.text || "",
+        classCount: module.NumberOfClasses,
+        topics: module.TopicsCovered[0]?.children[0]?.text
+          ? module.TopicsCovered[0].children[0].text.split(", ")
+          : [],
+      })) || [],
+  };
+}

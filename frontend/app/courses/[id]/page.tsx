@@ -2,28 +2,60 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useUser } from "@/contexts/user-context";
-import { mockCourses } from "@/lib/mock-data";
 import ModuleCard from "@/components/module-card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { fetchCourseById } from "@/lib/api"; // We'll need to add this function
 
 export default function CourseDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useUser();
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || user.role !== "student") {
       router.push("/");
+      return;
     }
-  }, [user, router]);
+
+    const loadCourse = async () => {
+      try {
+        const courseData = await fetchCourseById(params.id as string);
+        setCourse(courseData);
+      } catch (err) {
+        setError("Failed to load course data");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourse();
+  }, [user, router, params.id]);
 
   if (!user || user.role !== "student") {
     return null;
   }
 
-  const course = mockCourses.find((c) => c.id === params.id);
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <p className="text-center text-gray-600">Loading course details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <p className="text-center text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   if (!course) {
     return (

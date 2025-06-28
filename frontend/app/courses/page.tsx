@@ -2,27 +2,49 @@
 
 import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/user-context";
-import { mockCourses, mockEnrolledCourses } from "@/lib/mock-data";
 import CourseCard from "@/components/course-card";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { fetchCurrentUserCourses } from "@/lib/api"; // You'll need to add this function to your api.ts
 
 export default function CoursesPage() {
   const { user } = useUser();
   const router = useRouter();
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== "student") {
       router.push("/");
+      return;
     }
+
+    const loadCourses = async () => {
+      try {
+        const courses = await fetchCurrentUserCourses();
+        setEnrolledCourses(courses);
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCourses();
   }, [user, router]);
 
   if (!user || user.role !== "student") {
     return null;
   }
 
-  const enrolledCourses = mockCourses.filter((course) =>
-    mockEnrolledCourses.includes(course.id),
-  );
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center py-12">
+          <p className="text-gray-600 text-lg">Loading your courses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
