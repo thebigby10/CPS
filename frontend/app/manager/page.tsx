@@ -214,38 +214,97 @@ export default function ManagerPage() {
   };
 
   // Module CRUD operations
-  const handleCreateModule = () => {
+  // const handleCreateModule = async () => {
+  //   if (
+  //     !moduleForm.name.trim() ||
+  //     !moduleForm.description.trim() ||
+  //     !moduleForm.courseId
+  //   ) {
+  //     return;
+  //   }
+
+  //   try {
+  //     // Call API to create module on server
+  //     const newModule = await createModule({
+  //       name: moduleForm.name,
+  //       description: moduleForm.description,
+  //       classCount: moduleForm.classCount,
+  //       topics: moduleForm.topics,
+  //       courseId: moduleForm.courseId,
+  //     });
+
+  //     // Update local state with server response
+  //     setCourses(
+  //       courses.map((course) =>
+  //         course.id === moduleForm.courseId
+  //           ? {
+  //               ...course,
+  //               modules: [...course.modules, newModule],
+  //             }
+  //           : course,
+  //       ),
+  //     );
+
+  //     // Reset form
+  //     setModuleForm({
+  //       name: "",
+  //       description: "",
+  //       classCount: 0,
+  //       topics: [],
+  //       courseId: "",
+  //     });
+  //     setShowModuleForm(false);
+  //   } catch (error) {
+  //     console.error("Failed to create module:", error);
+  //     // Optionally show error to user
+  //     alert("Failed to create module. Please try again.");
+  //   }
+  // };
+  const handleCreateModule = async () => {
     if (
       !moduleForm.name.trim() ||
       !moduleForm.description.trim() ||
       !moduleForm.courseId
-    )
+    ) {
       return;
+    }
 
-    const newModule: Module = {
-      id: Date.now().toString(),
-      Name: moduleForm.name,
-      Details: moduleForm.description,
-      NumberOfClasses: moduleForm.classCount,
-      topics: moduleForm.topics,
-    };
+    try {
+      // Call API to create module on server
+      const newModule = await createModule({
+        name: moduleForm.name,
+        description: moduleForm.description,
+        classCount: moduleForm.classCount,
+        topics: moduleForm.topics,
+        courseId: moduleForm.courseId,
+      });
 
-    setCourses(
-      courses.map((course) =>
-        course.id === moduleForm.courseId
-          ? { ...course, modules: [...course.modules, newModule] }
-          : course,
-      ),
-    );
+      // Update local state with server response
+      setCourses(
+        courses.map((course) =>
+          course.id === moduleForm.courseId
+            ? {
+                ...course,
+                modules: [...course.modules, newModule],
+              }
+            : course,
+        ),
+      );
 
-    setModuleForm({
-      name: "",
-      description: "",
-      classCount: 0,
-      topics: [],
-      courseId: "",
-    });
-    setShowModuleForm(false);
+      // Reset form
+      setModuleForm({
+        name: "",
+        description: "",
+        classCount: 0,
+        topics: [],
+        courseId: "",
+      });
+      setShowModuleForm(false);
+    } catch (error) {
+      console.error("Failed to create module:", error);
+      // Optionally show error to user
+      alert(error.message || "Failed to create module. Please try again.");
+    }
   };
 
   const handleEditModule = (module: Module, courseId: string) => {
@@ -260,64 +319,154 @@ export default function ManagerPage() {
     setShowModuleForm(true);
   };
 
-  const handleUpdateModule = () => {
+  // const handleUpdateModule = () => {
+  //   if (
+  //     !editingModule ||
+  //     !moduleForm.name.trim() ||
+  //     !moduleForm.description.trim()
+  //   )
+  //     return;
+
+  //   setCourses(
+  //     courses.map((course) =>
+  //       course.id === editingModule.courseId
+  //         ? {
+  //             ...course,
+  //             modules: course.modules.map((module) =>
+  //               module.id === editingModule.module.id
+  //                 ? {
+  //                     ...module,
+  //                     name: moduleForm.name,
+  //                     description: moduleForm.description,
+  //                     classCount: moduleForm.classCount,
+  //                     topics: moduleForm.topics,
+  //                   }
+  //                 : module,
+  //             ),
+  //           }
+  //         : course,
+  //     ),
+  //   );
+
+  //   setEditingModule(null);
+  //   setModuleForm({
+  //     name: "",
+  //     description: "",
+  //     classCount: 0,
+  //     topics: [],
+  //     courseId: "",
+  //   });
+  //   setShowModuleForm(false);
+  // };
+  const handleUpdateModule = async () => {
     if (
       !editingModule ||
       !moduleForm.name.trim() ||
       !moduleForm.description.trim()
-    )
+    ) {
       return;
+    }
 
-    setCourses(
-      courses.map((course) =>
-        course.id === editingModule.courseId
-          ? {
-              ...course,
-              modules: course.modules.map((module) =>
-                module.id === editingModule.module.id
-                  ? {
-                      ...module,
-                      name: moduleForm.name,
-                      description: moduleForm.description,
-                      classCount: moduleForm.classCount,
-                      topics: moduleForm.topics,
-                    }
-                  : module,
-              ),
-            }
-          : course,
-      ),
-    );
+    try {
+      // Call API to update module
+      const updatedModule = await updateModule(editingModule.module.id, {
+        name: moduleForm.name,
+        description: moduleForm.description,
+        classCount: moduleForm.classCount,
+        topics: moduleForm.topics,
+        courseId: editingModule.courseId,
+      });
 
-    setEditingModule(null);
-    setModuleForm({
-      name: "",
-      description: "",
-      classCount: 0,
-      topics: [],
-      courseId: "",
-    });
-    setShowModuleForm(false);
+      // Update local state with API response
+      setCourses(
+        courses.map((course) =>
+          course.id === editingModule.courseId
+            ? {
+                ...course,
+                modules: course.modules.map((module) =>
+                  module.id === editingModule.module.id
+                    ? updatedModule // Use the API response
+                    : module,
+                ),
+              }
+            : course,
+        ),
+      );
+
+      setEditingModule(null);
+      setModuleForm({
+        name: "",
+        description: "",
+        classCount: 0,
+        topics: [],
+        courseId: "",
+      });
+      setShowModuleForm(false);
+    } catch (error) {
+      console.error("Failed to update module:", error);
+      alert(error.message || "Failed to update module");
+    }
   };
 
-  const handleDeleteModule = (courseId: string, moduleId: string) => {
-    setCourses(
-      courses.map((course) =>
-        course.id === courseId
-          ? {
-              ...course,
-              modules: course.modules.filter((m) => m.id !== moduleId),
-            }
-          : course,
-      ),
-    );
-    setDeleteConfirm(null);
+  // const handleDeleteModule = (courseId: string, moduleId: string) => {
+  //   setCourses(
+  //     courses.map((course) =>
+  //       course.id === courseId
+  //         ? {
+  //             ...course,
+  //             modules: course.modules.filter((m) => m.id !== moduleId),
+  //           }
+  //         : course,
+  //     ),
+  //   );
+  //   setDeleteConfirm(null);
+  // };
+  const handleDeleteModule = async (courseId: string, moduleId: string) => {
+    try {
+      // First delete from backend
+      await deleteModule(moduleId);
+
+      // Only update UI if API call succeeds
+      setCourses(
+        courses.map((course) =>
+          course.id === courseId
+            ? {
+                ...course,
+                modules: course.modules.filter((m) => m.id !== moduleId),
+              }
+            : course,
+        ),
+      );
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Failed to delete module:", error);
+      alert(error.message || "Failed to delete module");
+      // Optionally revert UI here if you want to implement optimistic updates
+    }
   };
 
-  // User role management
-  const handleUpdateUserRole = (userId: string, newRole: User["role"]) => {
-    setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
-    setEditingUserRole(null);
+  // // User role management
+  // const handleUpdateUserRole = (userId: string, newRole: User["role"]) => {
+  //   setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
+  //   setEditingUserRole(null);
+  // };
+  const handleUpdateUserRole = async (
+    userId: string,
+    newRole: User["role"],
+  ) => {
+    try {
+      // Call API to update role
+      const updatedUser = await updateUserRole(userId, newRole);
+
+      // Update local state with API response
+      setUsers(users.map((u) => (u.id === userId ? updatedUser : u)));
+
+      setEditingUserRole(null);
+    } catch (error) {
+      console.error("Failed to update user role:", error);
+      alert(error.message || "Failed to update user role");
+      // Optionally revert UI here
+    }
   };
 
   // Helper functions

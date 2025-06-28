@@ -12,10 +12,10 @@ export interface Course {
   modules: Module[];
 }
 
-export interface Module {
+type Module = {
   id: string;
-  Name: string;
-  Description: string;
-  NumberOfClasses: number;
-  TopicsCovered: string[];
-}
+  name: string;
+  description: string;
+  classCount: number;
+  topics: string[];
+};
