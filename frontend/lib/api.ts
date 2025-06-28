@@ -452,42 +452,116 @@ export const updateUserRole = async (
 //   );
 // }
 
+// export async function fetchCurrentUserCourses(): Promise<Course[]> {
+//   const jwt = localStorage.getItem("jwt");
+//   if (!jwt) {
+//     throw new Error("No JWT token found");
+//   }
+
+//   const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
+//     credentials: "include",
+//     headers: {
+//       Authorization: `Bearer ${jwt}`,
+//     },
+//   });
+
+//   if (!res.ok) {
+//     throw new Error("Failed to fetch user courses");
+//   }
+
+//   const data = await res.json();
+
+//   // Create a map to filter out duplicates by documentId
+//   const coursesMap = new Map<string, Course>();
+
+//   data.courses?.forEach((course: any) => {
+//     // Only add the course if we haven't seen this documentId before
+//     if (!coursesMap.has(course.documentId)) {
+//       // Fixed: Added missing parenthesis
+//       coursesMap.set(course.documentId, {
+//         id: course.documentId,
+//         title: course.Title,
+//         description: course.Description,
+//         modules: [], // You might want to populate this if needed
+//       });
+//     }
+//   });
+
+//   return Array.from(coursesMap.values());
+// }
+
 export async function fetchCurrentUserCourses(): Promise<Course[]> {
   const jwt = localStorage.getItem("jwt");
   if (!jwt) {
     throw new Error("No JWT token found");
   }
 
-  const res = await fetch(`${API_URL}/api/users/me?populate=courses`, {
+  // First fetch the user's enrolled courses
+  const userRes = await fetch(`${API_URL}/api/users/me?populate=courses`, {
     credentials: "include",
     headers: {
       Authorization: `Bearer ${jwt}`,
     },
   });
 
-  if (!res.ok) {
+  if (!userRes.ok) {
     throw new Error("Failed to fetch user courses");
   }
 
-  const data = await res.json();
+  const userData = await userRes.json();
 
   // Create a map to filter out duplicates by documentId
   const coursesMap = new Map<string, Course>();
 
-  data.courses?.forEach((course: any) => {
-    // Only add the course if we haven't seen this documentId before
+  // Get all unique course IDs first
+  userData.courses?.forEach((course: any) => {
     if (!coursesMap.has(course.documentId)) {
-      // Fixed: Added missing parenthesis
       coursesMap.set(course.documentId, {
         id: course.documentId,
         title: course.Title,
         description: course.Description,
-        modules: [], // You might want to populate this if needed
+        modules: [], // Temporary empty array
       });
     }
   });
 
-  return Array.from(coursesMap.values());
+  // Now fetch each course with modules populated
+  const coursesWithModules = await Promise.all(
+    Array.from(coursesMap.values()).map(async (course) => {
+      const courseRes = await fetch(
+        `${API_URL}/api/courses/${course.id}?populate=modules`,
+        {
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+        },
+      );
+
+      if (!courseRes.ok) {
+        console.error(`Failed to fetch modules for course ${course.id}`);
+        return course; // Return course without modules if fetch fails
+      }
+
+      const courseData = await courseRes.json();
+
+      return {
+        ...course,
+        modules:
+          courseData.data.modules?.map((module: any) => ({
+            id: module.documentId,
+            name: module.Name,
+            description: module.Details[0]?.children[0]?.text || "",
+            classCount: module.NumberOfClasses,
+            topics: module.TopicsCovered[0]?.children[0]?.text
+              ? module.TopicsCovered[0].children[0].text.split(", ")
+              : [],
+          })) || [],
+      };
+    }),
+  );
+
+  return coursesWithModules;
 }
 
 export async function fetchCourseById(id: string): Promise<Course> {
