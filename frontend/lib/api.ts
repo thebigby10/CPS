@@ -392,34 +392,68 @@ export const deleteModule = async (id: string): Promise<void> => {
 //     role: data.role,
 //   };
 // };
+// export const updateUserRole = async (
+//   id: string,
+//   role: User["role"],
+// ): Promise<User> => {
+//   const res = await fetch(`${API_URL}/api/users/${id}`, {
+//     method: "PUT",
+//     headers: {
+//       "Content-Type": "application/json",
+//       Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
+//     },
+//     body: JSON.stringify({
+//       role, // Remove data wrapper if your API doesn't expect it
+//     }),
+//   });
+
+//   if (!res.ok) {
+//     const errorData = await res.json().catch(() => ({}));
+//     throw new Error(errorData.message || "Failed to update user role");
+//   }
+
+//   const data = await res.json();
+
+//   // Ensure you're returning a properly formatted User object
+//   return {
+//     id: data.id || id, // Fallback to original id if not in response
+//     name: data.username || data.name || "", // Handle different response formats
+//     email: data.email || "",
+//     role: data.role || role, // Fallback to original role if not in response
+//   };
+// };
+//
+
 export const updateUserRole = async (
   id: string,
-  role: User["role"],
+  roleId: number, // Use role ID instead of role name
 ): Promise<User> => {
+  const jwt = localStorage.getItem("jwt");
   const res = await fetch(`${API_URL}/api/users/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("jwt") || ""}`,
+      Authorization: `Bearer ${jwt || ""}`,
     },
     body: JSON.stringify({
-      role, // Remove data wrapper if your API doesn't expect it
+      data: {
+        role: roleId,
+      },
     }),
   });
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to update user role");
+    throw new Error(errorData.error?.message || "Failed to update user role");
   }
 
   const data = await res.json();
 
-  // Ensure you're returning a properly formatted User object
   return {
-    id: data.id || id, // Fallback to original id if not in response
-    name: data.username || data.name || "", // Handle different response formats
+    id: data.id || id,
+    name: data.username || data.name || "",
     email: data.email || "",
-    role: data.role || role, // Fallback to original role if not in response
+    role: data.role?.name || "", // You can keep role ID if preferred
   };
 };
 

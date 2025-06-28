@@ -450,22 +450,36 @@ export default function ManagerPage() {
   //   setUsers(users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)));
   //   setEditingUserRole(null);
   // };
+  // const handleUpdateUserRole = async (
+  //   userId: string,
+  //   newRole: User["role"],
+  // ) => {
+  //   try {
+  //     // Call API to update role
+  //     const updatedUser = await updateUserRole(userId, newRole);
+
+  //     // Update local state with API response
+  //     setUsers(users.map((u) => (u.id === userId ? updatedUser : u)));
+
+  //     setEditingUserRole(null);
+  //   } catch (error) {
+  //     console.error("Failed to update user role:", error);
+  //     alert(error.message || "Failed to update user role");
+  //     // Optionally revert UI here
+  //   }
+  // };
+
   const handleUpdateUserRole = async (
     userId: string,
-    newRole: User["role"],
+    newRoleId: number, // must be ID
   ) => {
     try {
-      // Call API to update role
-      const updatedUser = await updateUserRole(userId, newRole);
-
-      // Update local state with API response
+      const updatedUser = await updateUserRole(userId, newRoleId);
       setUsers(users.map((u) => (u.id === userId ? updatedUser : u)));
-
       setEditingUserRole(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update user role:", error);
       alert(error.message || "Failed to update user role");
-      // Optionally revert UI here
     }
   };
 
