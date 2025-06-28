@@ -51,7 +51,7 @@ export async function fetchUsers(): Promise<User[]> {
     id: user.id.toString(),
     name: user.username,
     email: user.email,
-    role: user.role?.name || "normal_user",
+    role: user.role?.type || "normal_user",
   }));
 }
 
